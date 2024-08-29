@@ -3,7 +3,7 @@ const Mock = require('mockjs')
 module.exports = {
     async chatList () {
         const result = Mock.mock({
-            ['chats|10']: [
+            ['chats|20']: [
                 {
                     'id|+1': 0,
                     'avatar': function() {
