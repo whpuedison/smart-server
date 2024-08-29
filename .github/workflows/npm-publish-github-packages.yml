@@ -19,7 +19,7 @@ jobs:
         ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
         remote-host: ${{ secrets.REMOTE_HOST }}
         remote-user: ${{ secrets.REMOTE_USER }}
-        remote-dir: /home/wwwroot/ftpdir/qiankun/server
+        remote-dir: ${{ secrets.REMOTE_DIR }}
         script: |
           git pull origin master
           yarn install --production
