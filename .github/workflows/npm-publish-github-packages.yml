@@ -1,0 +1,26 @@
+name: Deploy Node.js Application
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Deploy application via SSH
+      uses: easingthemes/ssh-deploy@v2.1.2
+      with:
+        SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+        REMOTE_HOST: ${{ secrets.REMOTE_HOST }}
+        REMOTE_USER: ${{ secrets.REMOTE_USER }}
+        TARGET: ${{ secrets.REMOTE_DIR }}
+        SCRIPT_AFTER: |
+          git pull origin master
+          yarn install --production
+          pm2 restart all
