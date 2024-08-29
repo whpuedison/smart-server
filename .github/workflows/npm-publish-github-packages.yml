@@ -15,12 +15,12 @@ jobs:
 
     - name: Deploy application via SSH
       uses: easingthemes/ssh-deploy@v2.1.2
-      with:
+      env:
         SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
         REMOTE_HOST: ${{ secrets.REMOTE_HOST }}
         REMOTE_USER: ${{ secrets.REMOTE_USER }}
         TARGET: ${{ secrets.REMOTE_DIR }}
         SCRIPT_AFTER: |
-          git pull origin master
-          yarn install --production
-          pm2 restart all
+          git pull
+          yarn install
+          pm2 restart server/app.js
