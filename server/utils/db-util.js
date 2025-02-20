@@ -35,11 +35,10 @@ let createTable = function( sql ) {
   return query( sql, [] )
 }
 
-
-let findDataById = function( table,  id ) {
-  let  _sql =  "SELECT * FROM ?? WHERE id = ? "
-  return query( _sql, [ table, id, start, end ] )
-}
+let findDataById = function(table, openid) {
+  let _sql = "SELECT * FROM ?? WHERE open_id = ?";  // 依据 openid 查找用户
+  return query(_sql, [table, openid]);
+};
 
 
 let findDataByPage = function( table, keys, start, end ) {
@@ -47,12 +46,10 @@ let findDataByPage = function( table, keys, start, end ) {
   return query( _sql, [keys,  table,  start, end ] )
 }
 
-
-let insertData = function( table, values ) {
-  let _sql = "INSERT INTO ?? SET ?"
-  return query( _sql, [ table, values ] )
-}
-
+let insertData = function(table, values) {
+  let _sql = "INSERT INTO ?? SET ?";
+  return query(_sql, [table, values]);
+};
 
 let updateData = function( table, values, id ) {
   let _sql = "UPDATE ?? SET ? WHERE id = ?"
@@ -76,6 +73,11 @@ let count = function( table ) {
   return query( _sql, [ table ] )
 }
 
+let deleteData = function(table, scheduleId) {
+  const _sql = "DELETE FROM ?? WHERE id = ?";
+  return query(_sql, [table, scheduleId]);
+}
+
 module.exports = {
   query,
   createTable,
@@ -85,5 +87,6 @@ module.exports = {
   insertData,
   updateData,
   select,
-  count,
+  count,  
+  deleteData
 }

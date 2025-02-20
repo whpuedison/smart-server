@@ -17,6 +17,7 @@
   "dependencies": {
     "@babel/polyfill": "^7.0.0",
     "antd": "^3.10.9",
+    "axios": "^1.7.9",
     "busboy": "^0.2.14",
     "co": "^4.6.0",
     "debug": "^2.6.0",
