@@ -6,6 +6,7 @@ const routers = router
   .post('/schedule/addSchedule', chatController.addSchedule)
   .get('/schedule/getScheduleList', chatController.getScheduleList)
   .post('/schedule/deleteSchedule', chatController.deleteSchedule)
+  .post('/schedule/editSchedule', chatController.editSchedule)
 
 module.exports = routers
 

@@ -59,7 +59,36 @@ const miniapp = {
         } catch (error) {
             throw new Error('删除课程失败: ' + error.message);
         }
+    },
+
+    // 编辑课程
+    async editSchedule({ schedule_id, open_id, course_name, week_day, start_time, end_time, location }) {
+        try {
+            // 构建更新的数据对象
+            const updatedData = {
+                course_name,
+                week_day,
+                start_time,
+                end_time,
+                location
+            };
+
+            // 调用通用更新方法，更新课程信息
+            const result = await dbUtils.updateData('schedules', updatedData, schedule_id);
+
+            // 判断更新结果
+            if (result.affectedRows > 0) {
+                // 更新成功，返回更新后的课程数据
+                return true;
+            } else {
+                throw new Error('课程更新失败');
+            }
+        } catch (error) {
+            throw new Error('编辑课程失败: ' + error.message);
+        }
     }
+
+
 }
 
 

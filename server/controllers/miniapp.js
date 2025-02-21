@@ -151,5 +151,50 @@ module.exports = {
                 error: error.message || '未知错误'
             };
         }
-    }
+    },
+  /**
+   * 编辑课程
+   * @param {object} ctx 上下文对象
+   */
+    async editSchedule(ctx) {
+        const { id, courseName, weekValue, startTime, endTime, location } = ctx.request.body;
+        const openid = ctx.headers.openid;
+
+        // 如果没有提供 scheduleId 或 openid，则返回错误
+        if (!openid) {
+            ctx.status = 400;
+            ctx.body = {
+                code: 400,
+                message: 'openid 未提供'
+            };
+            return;
+        }
+
+        try {
+            // 调用 miniappService 更新课程信息
+            const result = await miniappService.editSchedule({
+                schedule_id: id,
+                open_id: openid,
+                course_name: courseName,
+                week_day: weekValue,
+                start_time: startTime,
+                end_time: endTime,
+                location
+            });
+            // 返回编辑成功的结果
+            ctx.body = {
+                code: 200,
+                message: '课程编辑成功'
+            };
+        } catch (error) {
+            // 错误处理
+            console.error('编辑课程失败:', error);
+            ctx.status = 500;
+            ctx.body = {
+                code: 500,
+                message: '课程编辑失败',
+                error: error.message || '未知错误'
+            };
+        }
+    },
 };
