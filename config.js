@@ -1,11 +1,20 @@
 const config = {
 
   port: 3000,
+  // 开发环境
+  // database: {
+  //   DATABASE: 'mydatabase',
+  //   USERNAME: 'root',
+  //   PASSWORD: 'password',
+  //   PORT: '3306',
+  //   HOST: 'localhost'
+  // }
 
+  //生产环境
   database: {
-    DATABASE: 'mydatabase',
+    DATABASE: 'miniapp',
     USERNAME: 'root',
-    PASSWORD: 'password',
+    PASSWORD: '18370263_Root',
     PORT: '3306',
     HOST: 'localhost'
   }

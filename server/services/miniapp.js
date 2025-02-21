@@ -2,12 +2,9 @@ const axios = require('axios');
 const miniappModel = require('./../models/miniapp')
 const utils = require('./../utils/utils');
 
-const APPID = 'wxa3f7a06bb04bbf11'; 
-const SECRET = 'xxx';
-
 module.exports = {
     async getUserInfo(code) {
-        const url = `https://api.weixin.qq.com/sns/jscode2session?appid=${APPID}&secret=${SECRET}&js_code=${code}&grant_type=authorization_code`;
+        const url = `https://api.weixin.qq.com/sns/jscode2session?appid=wxa3f7a06bb04bbf11&secret=090d93bdada81b72cc8df609608a3399&js_code=${code}&grant_type=authorization_code`;
         try {
             const response = await axios.get(url);
             const { openid, session_key, errcode, errmsg } = response.data;
