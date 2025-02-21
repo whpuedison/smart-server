@@ -3,7 +3,7 @@ const miniappModel = require('./../models/miniapp')
 const utils = require('./../utils/utils');
 
 const APPID = 'wxa3f7a06bb04bbf11'; 
-const SECRET = '090d93bdada81b72cc8df609608a3399';
+const SECRET = 'xxx';
 
 module.exports = {
     async getUserInfo(code) {
