@@ -1,12 +1,15 @@
 const router = require('koa-router')()
-const chatController = require('./../controllers/miniapp')
+const miniappController = require('./../controllers/miniapp')
 
 const routers = router
-  .post('/auth/getUserInfo', chatController.getUserInfo)
-  .post('/schedule/addSchedule', chatController.addSchedule)
-  .get('/schedule/getScheduleList', chatController.getScheduleList)
-  .post('/schedule/deleteSchedule', chatController.deleteSchedule)
-  .post('/schedule/editSchedule', chatController.editSchedule)
+  .post('/auth/getUserInfo', miniappController.getUserInfo)
+  .post('/schedule/addSchedule', miniappController.addSchedule)
+  .get('/schedule/getScheduleList', miniappController.getScheduleList)
+  .get('/schedule/getHistoryScheduleList', miniappController.getHistoryScheduleList)
+  .post('/schedule/deleteSchedule', miniappController.deleteSchedule)
+  .post('/schedule/editSchedule', miniappController.editSchedule)
+  .get('/schedule/getLocationList', miniappController.getLocationList)
+  .get('/schedule/getCourseTypeList', miniappController.getCourseTypeList)
 
 module.exports = routers
 

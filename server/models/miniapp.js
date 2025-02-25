@@ -62,19 +62,10 @@ const miniapp = {
     },
 
     // 编辑课程
-    async editSchedule({ schedule_id, open_id, course_name, week_day, start_time, end_time, location }) {
+    async editSchedule({ schedule_id, ...rest }) {
         try {
-            // 构建更新的数据对象
-            const updatedData = {
-                course_name,
-                week_day,
-                start_time,
-                end_time,
-                location
-            };
-
             // 调用通用更新方法，更新课程信息
-            const result = await dbUtils.updateData('schedules', updatedData, schedule_id);
+            const result = await dbUtils.updateData('schedules', rest, schedule_id);
 
             // 判断更新结果
             if (result.affectedRows > 0) {

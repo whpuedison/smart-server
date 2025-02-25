@@ -1,39 +1,49 @@
+-- 创建用户表（含字符集）
 CREATE TABLE users (
-    id INT AUTO_INCREMENT PRIMARY KEY,       -- 用户的唯一标识
-    open_id VARCHAR(255) NOT NULL UNIQUE,      -- 微信的 openid
-    nickname VARCHAR(255),                    -- 用户的昵称
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- 账户创建时间
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP -- 最后更新时间
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    open_id VARCHAR(255) NOT NULL UNIQUE,
+    nickname VARCHAR(255),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
+-- 创建课程类型表
+CREATE TABLE course_types (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    description VARCHAR(255) NOT NULL,
+    price DECIMAL(10, 2) NOT NULL
+);
+
+-- 创建地点表（关键表，明确字符集）
+CREATE TABLE locations (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    description VARCHAR(255) NOT NULL,
+    color VARCHAR(7) NOT NULL  -- HEX格式如 #FF5733
+);
+
+-- 创建排课表
 CREATE TABLE schedules (
-    id INT AUTO_INCREMENT PRIMARY KEY,            -- 排课的唯一标识
-    open_id VARCHAR(255) NOT NULL,                  -- 关联到用户
-    course_name VARCHAR(255) NOT NULL,             -- 课程名称
-    start_time TIME NOT NULL,                      -- 课程开始时间
-    end_time TIME NOT NULL,                        -- 课程结束时间
-    week_day VARCHAR(255) NOT NULL,                         -- 上课的星期几（1-7代表周一到周日）
-    location VARCHAR(255) NOT NULL,                -- 上课地点
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- 创建时间
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, -- 最后更新时间
-    FOREIGN KEY (open_id) REFERENCES users(open_id)  -- 关联到用户表
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    open_id VARCHAR(255) NOT NULL,
+    course_name VARCHAR(255) NOT NULL,
+    start_time TIME NOT NULL,
+    end_time TIME NOT NULL,
+    course_date DATE NOT NULL,
+    location VARCHAR(255) NOT NULL,
+    course_type_id INT NOT NULL,
+    course_type_desc VARCHAR(255) NOT NULL,
+    course_type_price DECIMAL(10, 2) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (open_id) REFERENCES users(open_id),
+    FOREIGN KEY (course_type_id) REFERENCES course_types(id)
 );
 
-CREATE TABLE attendance (
-    id INT AUTO_INCREMENT PRIMARY KEY,             -- 打卡记录的唯一标识
-    open_id VARCHAR(255) NOT NULL,                  -- 关联到用户
-    schedule_id INT NOT NULL,                       -- 关联到具体的课程
-    clock_in_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,  -- 打卡时间
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- 创建时间
-    FOREIGN KEY (open_id) REFERENCES users(open_id),  -- 关联到用户表
-    FOREIGN KEY (schedule_id) REFERENCES schedules(id) -- 关联到课程表
-);
+INSERT INTO locations (description, color) VALUES
+('绿地店', '#bcddbe'), 
+('云玺店', '#f1ffff'), 
+('之寓店', '#e8f5e9');
 
-CREATE TABLE hourly_rate (
-    id INT AUTO_INCREMENT PRIMARY KEY,         -- 记录的唯一标识
-    open_id VARCHAR(255) NOT NULL,              -- 关联到用户
-    rate DECIMAL(10, 2) NOT NULL,              -- 课时费率
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP, -- 创建时间
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, -- 最后更新时间
-    FOREIGN KEY (open_id) REFERENCES users(open_id) -- 关联到用户表
-);
+INSERT INTO course_types (description, price) VALUES
+('瑜伽小班', 90),
+('普拉提器械', 100);

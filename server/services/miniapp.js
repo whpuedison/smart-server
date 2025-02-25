@@ -1,6 +1,7 @@
 const axios = require('axios');
 const miniappModel = require('./../models/miniapp')
 const utils = require('./../utils/utils');
+const { query } = require('./../utils/db-util')
 
 module.exports = {
     async getUserInfo(code) {
@@ -36,59 +37,117 @@ module.exports = {
 
   async getScheduleList(openid) {
     try {
-      // 查询排课数据
-      const schedules = await miniappModel.getScheduleList(openid);
+      // 查询今天及今天以后的排课数据，按 course_date 排序
+      const schedules = await query(`
+        SELECT id, course_name, location, start_time, end_time, course_date, course_type_id, course_type_desc, course_type_price
+        FROM schedules 
+        WHERE open_id = ? 
+          AND course_date >= CURDATE() 
+        ORDER BY course_date ASC
+      `, [openid]);
   
-      // 获取当前日期
-      const currentDate = new Date();
-      const currentDay = currentDate.getDay(); // 获取当前是星期几 (0-6，0代表星期天，1代表星期一)
-      const diffToMonday = currentDay === 0 ? -6 : 1 - currentDay; // 如果是星期天，距离周一是-6天，否则是1 - 当前日期
-      const mondayDate = new Date(currentDate);
-      mondayDate.setDate(currentDate.getDate() + diffToMonday); // 设置为当前周的周一
-  
-      // 生成当前周的所有日期（周一到周日）
-      const weekDates = [];
-      for (let i = 0; i < 7; i++) {
-        const date = new Date(mondayDate);
-        date.setDate(mondayDate.getDate() + i); // 设置为周一到周日的日期
-        weekDates.push({
-          day: ['周一', '周二', '周三', '周四', '周五', '周六', '周日'][i],  // 星期几
-          date: date.toISOString().split('T')[0], // 格式化为 YYYY-MM-DD
-        });
-      }
-  
-      // 格式化并将数据按照星期几分组
-      const formattedSchedules = schedules.reduce((acc, course) => {
-        // 查找该天是否已经有排课，如果没有就创建一个新的
-        let dayGroup = acc.find(item => item.weekDay === course.week_day);
-        if (!dayGroup) {
-          dayGroup = { 
-            weekDay: course.week_day, 
-            weekDayDate: weekDates.find(item => item.day === course.week_day).date, // 获取对应日期
-            list: [] 
+      // 将查询结果按 course_date 分组
+      const groupedSchedules = schedules.reduce((acc, schedule) => {
+        const formattedDate = new Date(schedule.course_date);
+        const dateKey = `${(formattedDate.getMonth() + 1).toString().padStart(2, '0')}-${formattedDate.getDate().toString().padStart(2, '0')}`;
+        const fullDate = `${formattedDate.getFullYear()}-${dateKey}`;
+        const weekDays = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
+        const weekDay = weekDays[formattedDate.getDay()];
+        // 如果日期组不存在，创建一个新的
+        if (!acc[dateKey]) {
+          acc[dateKey] = {
+            courseDate: dateKey, // 使用日期作为 courseData
+            weekDay,
+            list: []
           };
-          acc.push(dayGroup);
         }
-  
-        // 将课程时间格式化为仅包含小时和分钟（例如：08:00）
-        dayGroup.list.push({
-          id: course.id,
-          courseName: course.course_name,
-          startTime: utils.formatTime(course.start_time),
-          endTime: utils.formatTime(course.end_time),
-          location: course.location,
+        const startTime = schedule.start_time.slice(0, -3)
+        const endTime = schedule.end_time.slice(0, -3)
+        // 添加课程信息到对应日期的列表中
+        acc[dateKey].list.push({
+          id: schedule.id,
+          courseName: schedule.course_name,
+          location: schedule.location,
+          startTime,
+          endTime,
+          timeRange: `${startTime}~${endTime}`,
+          fullDate: fullDate,
+          courseType: {
+            id: schedule.course_type_id,
+            description: schedule.course_type_desc,
+            price: schedule.course_type_price
+          }
         });
-  
         return acc;
-      }, []);
+      }, {});
   
-      // 排序：按周几顺序（1-7代表周一到周日）
-      const sortedSchedules = formattedSchedules.sort((a, b) => {
-        const weekDaysOrder = ['周一', '周二', '周三', '周四', '周五', '周六', '周日'];
-        return weekDaysOrder.indexOf(a.weekDay) - weekDaysOrder.indexOf(b.weekDay);
-      });
+      // 转换成数组格式并返回
+      return Object.values(groupedSchedules);
   
-      return sortedSchedules;
+    } catch (error) {
+      throw new Error('获取排课列表失败：' + error.message);
+    }
+  },  
+
+  async getHistoryScheduleList(openid, yearMonth) {
+    try {
+    const targetDate = new Date(yearMonth);
+    const targetYear = targetDate.getFullYear();
+    const targetMonth = targetDate.getMonth() + 1;
+
+    const schedules = await query(`
+      SELECT id, course_name, location, start_time, end_time, course_date, course_type_id, course_type_desc, course_type_price
+      FROM schedules 
+      WHERE open_id = ? 
+        AND course_date < CURDATE() 
+        AND YEAR(course_date) = ? 
+        AND MONTH(course_date) = ?
+      ORDER BY course_date DESC
+    `, [openid, targetYear, targetMonth]);  // SQL月份从1开始，所以要加1
+
+    let totalSalary = 0; // 用来累计课时费
+  
+      // 将查询结果按 course_date 分组
+      const groupedSchedules = schedules.reduce((acc, schedule) => {
+        const formattedDate = new Date(schedule.course_date);
+        const dateKey = `${(formattedDate.getMonth() + 1).toString().padStart(2, '0')}-${formattedDate.getDate().toString().padStart(2, '0')}`;
+        const fullDate = `${formattedDate.getFullYear()}-${dateKey}`;
+        const weekDays = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
+        const weekDay = weekDays[formattedDate.getDay()];
+        // 如果日期组不存在，创建一个新的
+        if (!acc[dateKey]) {
+          acc[dateKey] = {
+            courseDate: dateKey, // 使用日期作为 courseData
+            weekDay,
+            list: []
+          };
+        }
+        const startTime = schedule.start_time.slice(0, -3)
+        const endTime = schedule.end_time.slice(0, -3)
+        totalSalary += schedule.course_type_price;
+        // 添加课程信息到对应日期的列表中
+        acc[dateKey].list.push({
+          id: schedule.id,
+          courseName: schedule.course_name,
+          location: schedule.location,
+          startTime,
+          endTime,
+          timeRange: `${startTime}~${endTime}`,
+          fullDate: fullDate,
+          courseType: {
+            id: schedule.course_type_id,
+            description: schedule.course_type_desc,
+            price: schedule.course_type_price
+          }
+        });
+        return acc;
+      }, {});
+  
+      // 转换成数组格式并返回
+      return {
+        schedules: Object.values(groupedSchedules),
+        totalSalary: totalSalary.toFixed(2)  // 返回总课时费
+      };
     } catch (error) {
       throw new Error('获取排课列表失败：' + error.message);
     }
@@ -120,5 +179,23 @@ module.exports = {
     } catch (error) {
         throw new Error('编辑课程失败：' + error.message);
     }
-}
+},
+
+async getLocationList() {
+  try {
+    const schedules = await query('SELECT * FROM locations');
+    return schedules;
+  } catch (error) {
+    throw new Error('获取门店列表失败：' + error.message);
+  }
+},  
+
+async getCourseTypeList() {
+  try {
+    const list = await query('SELECT * FROM course_types');
+    return list;
+  } catch (error) {
+    throw new Error('获取课程类型列表失败：' + error.message);
+  }
+},  
 }
