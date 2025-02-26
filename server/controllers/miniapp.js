@@ -121,6 +121,7 @@ module.exports = {
     async getWeekScheduleList(ctx) {
         // 从请求头中获取 openid
         const openid = ctx.headers.openid;
+        const { customDate } = ctx.request.body;
 
         // 如果没有提供 openid，则返回错误
         if (!openid) {
@@ -134,7 +135,7 @@ module.exports = {
 
         try {
             // 调用 miniappService 获取排课列表
-            const list = await miniappService.getWeekScheduleList(openid);
+            const list = await miniappService.getWeekScheduleList(openid, customDate);
 
             // 返回排课列表
             ctx.body = {

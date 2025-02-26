@@ -87,40 +87,26 @@ module.exports = {
     } catch (error) {
       throw new Error('获取排课列表失败：' + error.message);
     }
-  },  
+  },   
 
-  async getWeekScheduleList(openid) {
+  async getWeekScheduleList(openid, customDate) {
     try {
-      // 获取今天的日期
-      const today = new Date();
-      const currentDayOfWeek = today.getDay();
-  
-      // 计算本周的开始日期（周一）和结束日期（周日）
-      const daysToMonday = (currentDayOfWeek === 0 ? 6 : currentDayOfWeek - 1);
-      const monday = new Date(today);
-      monday.setDate(today.getDate() - daysToMonday); // 设置为本周一
-  
-      const sunday = new Date(monday);
-      sunday.setDate(monday.getDate() + 6); // 设置为本周日
-  
-      // 格式化为 'yyyy-mm-dd' 形式，避免时区差异
-      const mondayStr = monday.toISOString().split('T')[0];
-      const sundayStr = sunday.toISOString().split('T')[0];
+      const [mondayStr, sundayStr] = customDate
       const START_TIME = '10:00'; // 课程最早开始时间
       const END_TIME = '21:00'; // 课程最晚结束时间
       // 将时间字符串转换为小时数
       const startHour = parseInt(START_TIME.split(':')[0], 10);
       const endHour = parseInt(END_TIME.split(':')[0], 10);
-
+  
       // 生成从 startHour 到 endHour 的小时数组
       const hoursArray = [];
       for (let hour = startHour; hour < endHour; hour++) {
         hoursArray.push(hour);
       }
-
+  
       const fullDuration = calcIntervalMin(START_TIME, END_TIME)
   
-      // 查询本周的排课数据
+      // 查询自定义日期范围内的排课数据
       const schedules = await query(`
         SELECT id, course_name, location, start_time, end_time, course_date
         FROM schedules 
@@ -129,38 +115,41 @@ module.exports = {
         ORDER BY course_date ASC, start_time ASC
       `, [openid, mondayStr, sundayStr]);
   
-      // 构造本周的排课数据结构
+      // 构造自定义日期范围的排课数据结构
       const weekSchedule = [];
-      for (let i = 0; i < 7; i++) {
-        const date = new Date(monday);
-        date.setDate(monday.getDate() + i);
-  
-        const dateKey = date.toISOString().split('T')[0]; // 格式化为 'yyyy-mm-dd'
-        const weekDay = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'][date.getDay()];
+      const startDate = new Date(mondayStr);
+      const endDate = new Date(sundayStr);
+      while (startDate <= endDate) {
+        const dateKey = startDate.toISOString().split('T')[0]; // 格式化为 'yyyy-mm-dd'
+        const weekDay = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'][startDate.getDay()];
         const weekDate = dateKey.slice(5); // 获取 MM-DD 格式
   
         // 筛选出该日期的所有排课数据
-        const daySchedule = schedules.filter(schedule => new Date(schedule.course_date).getDate() == dateKey.slice(8))
-          .map(schedule => {
-            const startTime = schedule.start_time.slice(0, 5)
-            const endTime = schedule.end_time.slice(0, 5)
-            const left = `${calcIntervalMin(START_TIME, startTime) / fullDuration * 100}%`;
-            const width = `${calcIntervalMin(startTime, endTime) / fullDuration * 100}%`;
-            return {
-              startTime,
-              endTime,
-              left,
-              width,
-              courseName: schedule.course_name,
-              location: schedule.location
-            }
-          });
+        const daySchedule = schedules.filter(schedule => {
+          return new Date(schedule.course_date).toISOString().split('T')[0] === dateKey;
+        }).map(schedule => {
+          const startTime = schedule.start_time.slice(0, 5)
+          const endTime = schedule.end_time.slice(0, 5)
+          const left = `${calcIntervalMin(START_TIME, startTime) / fullDuration * 100}%`;
+          const width = `${calcIntervalMin(startTime, endTime) / fullDuration * 100}%`;
+          return {
+            startTime,
+            endTime,
+            left,
+            width,
+            courseName: schedule.course_name,
+            location: schedule.location
+          }
+        });
   
         weekSchedule.push({
           weekDay,
           weekDate,
           list: daySchedule
         });
+  
+        // 增加日期
+        startDate.setDate(startDate.getDate() + 1);
       }
   
       return {
@@ -169,9 +158,9 @@ module.exports = {
       };
   
     } catch (error) {
-      throw new Error('获取本周排课列表失败：' + error.message);
+      throw new Error('获取排课列表失败：' + error.message);
     }
-  },   
+  },  
 
   async getHistoryScheduleList(openid, yearMonth) {
     try {

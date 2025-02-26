@@ -10,7 +10,7 @@ const routers = router
   .post('/schedule/editSchedule', miniappController.editSchedule)
   .get('/schedule/getLocationList', miniappController.getLocationList)
   .get('/schedule/getCourseTypeList', miniappController.getCourseTypeList)
-  .get('/schedule/getWeekScheduleList', miniappController.getWeekScheduleList)
+  .post('/schedule/getWeekScheduleList', miniappController.getWeekScheduleList)
 
 module.exports = routers
 
