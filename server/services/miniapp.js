@@ -107,8 +107,17 @@ module.exports = {
       const mondayStr = monday.toISOString().split('T')[0];
       const sundayStr = sunday.toISOString().split('T')[0];
       const START_TIME = '10:00'; // 课程最早开始时间
-      const MID_TIME = '15:30'; // 课程中间时间
       const END_TIME = '21:00'; // 课程最晚结束时间
+      // 将时间字符串转换为小时数
+      const startHour = parseInt(START_TIME.split(':')[0], 10);
+      const endHour = parseInt(END_TIME.split(':')[0], 10);
+
+      // 生成从 startHour 到 endHour 的小时数组
+      const hoursArray = [];
+      for (let hour = startHour; hour < endHour; hour++) {
+        hoursArray.push(hour);
+      }
+
       const fullDuration = calcIntervalMin(START_TIME, END_TIME)
   
       // 查询本周的排课数据
@@ -156,7 +165,7 @@ module.exports = {
   
       return {
         list: weekSchedule,
-        xAxisData: [START_TIME, MID_TIME, END_TIME]
+        xAxisData: hoursArray
       };
   
     } catch (error) {
