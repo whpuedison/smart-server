@@ -91,7 +91,7 @@ module.exports = {
 
   async getWeekScheduleList(openid, customDate) {
     try {
-      const [mondayStr, sundayStr] = customDate
+      const [mondayStr, sundayStr] = customDate;
       const START_TIME = '10:00'; // 课程最早开始时间
       const END_TIME = '21:00'; // 课程最晚结束时间
       // 将时间字符串转换为小时数
@@ -104,7 +104,7 @@ module.exports = {
         hoursArray.push(hour);
       }
   
-      const fullDuration = calcIntervalMin(START_TIME, END_TIME)
+      const fullDuration = calcIntervalMin(START_TIME, END_TIME);
   
       // 查询自定义日期范围内的排课数据
       const schedules = await query(`
@@ -114,22 +114,28 @@ module.exports = {
           AND course_date BETWEEN ? AND ?
         ORDER BY course_date ASC, start_time ASC
       `, [openid, mondayStr, sundayStr]);
+
+      // 格式化日期为 'yyyy-mm-dd' 形式，避免时区差异
+      const formatDate = (date) => {
+        const options = { year: 'numeric', month: '2-digit', day: '2-digit' };
+        return new Date(date).toLocaleDateString('en-CA', options).replace(/\//g, '-');
+      };
   
       // 构造自定义日期范围的排课数据结构
       const weekSchedule = [];
       const startDate = new Date(mondayStr);
       const endDate = new Date(sundayStr);
       while (startDate <= endDate) {
-        const dateKey = startDate.toISOString().split('T')[0]; // 格式化为 'yyyy-mm-dd'
+        const dateKey = formatDate(startDate); // 使用本地日期格式（YYYY-MM-DD）
         const weekDay = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'][startDate.getDay()];
         const weekDate = dateKey.slice(5); // 获取 MM-DD 格式
   
         // 筛选出该日期的所有排课数据
         const daySchedule = schedules.filter(schedule => {
-          return new Date(schedule.course_date).toISOString().split('T')[0] === dateKey;
+          return formatDate(schedule.course_date) === dateKey;
         }).map(schedule => {
-          const startTime = schedule.start_time.slice(0, 5)
-          const endTime = schedule.end_time.slice(0, 5)
+          const startTime = schedule.start_time.slice(0, 5);
+          const endTime = schedule.end_time.slice(0, 5);
           const left = `${calcIntervalMin(START_TIME, startTime) / fullDuration * 100}%`;
           const width = `${calcIntervalMin(startTime, endTime) / fullDuration * 100}%`;
           return {
@@ -139,7 +145,7 @@ module.exports = {
             width,
             courseName: schedule.course_name,
             location: schedule.location
-          }
+          };
         });
   
         weekSchedule.push({
