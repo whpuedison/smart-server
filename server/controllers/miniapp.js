@@ -118,6 +118,42 @@ module.exports = {
         }
     },
 
+    async getWeekScheduleList(ctx) {
+        // 从请求头中获取 openid
+        const openid = ctx.headers.openid;
+
+        // 如果没有提供 openid，则返回错误
+        if (!openid) {
+            ctx.status = 400;
+            ctx.body = {
+                code: 400,
+                message: 'openid 未提供'
+            };
+            return;
+        }
+
+        try {
+            // 调用 miniappService 获取排课列表
+            const list = await miniappService.getWeekScheduleList(openid);
+
+            // 返回排课列表
+            ctx.body = {
+                code: 200,
+                message: '获取本周排课列表成功',
+                data: list
+            };
+        } catch (error) {
+            // 错误处理
+            console.error('获取本周排课列表失败:', error);
+            ctx.status = 500; // 设置 HTTP 状态码为 500
+            ctx.body = {
+                code: 500,
+                message: '服务器内部错误，请稍后再试',
+                error: error.message || '未知错误'
+            };
+        }
+    },
+
     async getHistoryScheduleList(ctx) {
         // 从请求头中获取 openid
         const openid = ctx.headers.openid;
