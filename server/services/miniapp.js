@@ -43,7 +43,7 @@ module.exports = {
         FROM schedules 
         WHERE open_id = ? 
           AND course_date >= CURDATE() 
-        ORDER BY course_date ASC
+        ORDER BY course_date ASC, start_time ASC
       `, [openid]);
   
       // 将查询结果按 course_date 分组
@@ -181,7 +181,7 @@ module.exports = {
         AND course_date < CURDATE() 
         AND YEAR(course_date) = ? 
         AND MONTH(course_date) = ?
-      ORDER BY course_date DESC
+      ORDER BY course_date ASC, start_time ASC
     `, [openid, targetYear, targetMonth]);  // SQL月份从1开始，所以要加1
 
     let totalSalary = 0; // 用来累计课时费
