@@ -185,6 +185,7 @@ module.exports = {
     `, [openid, targetYear, targetMonth]);  // SQL月份从1开始，所以要加1
 
     let totalSalary = 0; // 用来累计课时费
+    let storeSalaries = {}; // 用于存储每个门店的薪资
   
       // 将查询结果按 course_date 分组
       const groupedSchedules = schedules.reduce((acc, schedule) => {
@@ -204,6 +205,11 @@ module.exports = {
         const startTime = schedule.start_time.slice(0, -3)
         const endTime = schedule.end_time.slice(0, -3)
         totalSalary += schedule.course_type_price;
+        // 增加到对应门店的薪资
+        if (!storeSalaries[schedule.location]) {
+          storeSalaries[schedule.location] = 0;
+        }
+        storeSalaries[schedule.location] += schedule.course_type_price;
         // 添加课程信息到对应日期的列表中
         acc[dateKey].list.push({
           id: schedule.id,
@@ -221,11 +227,18 @@ module.exports = {
         });
         return acc;
       }, {});
+
+      // 转换成数组格式并返回
+    const storeSalaryArray = Object.keys(storeSalaries).map(location => ({
+      location,
+      salary: storeSalaries[location].toFixed(2)
+    }));
   
       // 转换成数组格式并返回
       return {
         schedules: Object.values(groupedSchedules),
-        totalSalary: totalSalary.toFixed(2)  // 返回总课时费
+        totalSalary: totalSalary.toFixed(2), // 返回总课时费
+        storeSalary: storeSalaryArray  // 返回门店薪资
       };
     } catch (error) {
       throw new Error('获取排课列表失败：' + error.message);
