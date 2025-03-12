@@ -151,60 +151,59 @@ parseElement(element) {
     return nodes;
 },
 
-async getScheduleList(openid) {
-  try {
-    // 查询今天及今天以后的排课数据，按 course_date 排序
-    const schedules = await query(`
-      SELECT id, course_name, location, start_time, end_time, course_date, course_type_id, course_type_desc, course_type_price
-      FROM schedules 
-      WHERE open_id = ? 
-        AND course_date >= CURDATE() 
-      ORDER BY course_date ASC
-    `, [openid]);
-
-    // 将查询结果按 course_date 分组
-    const groupedSchedules = schedules.reduce((acc, schedule) => {
-      const formattedDate = new Date(schedule.course_date);
-      const dateKey = `${(formattedDate.getMonth() + 1).toString().padStart(2, '0')}-${formattedDate.getDate().toString().padStart(2, '0')}`;
-      const fullDate = `${formattedDate.getFullYear()}-${dateKey}`;
-      const weekDays = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
-      const weekDay = weekDays[formattedDate.getDay()];
-      // 如果日期组不存在，创建一个新的
-      if (!acc[dateKey]) {
-        acc[dateKey] = {
-          courseDate: dateKey, // 使用日期作为 courseData
-          weekDay,
-          list: []
-        };
-      }
-      const startTime = schedule.start_time.slice(0, -3)
-      const endTime = schedule.end_time.slice(0, -3)
-      // 添加课程信息到对应日期的列表中
-      acc[dateKey].list.push({
-        id: schedule.id,
-        courseName: schedule.course_name,
-        location: schedule.location,
-        startTime,
-        endTime,
-        timeRange: `${startTime}~${endTime}`,
-        fullDate: fullDate,
-        courseType: {
-          id: schedule.course_type_id,
-          description: schedule.course_type_desc,
-          price: schedule.course_type_price
+  async getScheduleList(openid) {
+    try {
+      // 查询今天及今天以后的排课数据，按 course_date 排序
+      const schedules = await query(`
+        SELECT id, course_name, location, start_time, end_time, course_date, course_type_id, course_type_desc, course_type_price
+        FROM schedules 
+        WHERE open_id = ? 
+          AND course_date >= CURDATE() 
+        ORDER BY course_date ASC, start_time ASC
+      `, [openid]);
+  
+      // 将查询结果按 course_date 分组
+      const groupedSchedules = schedules.reduce((acc, schedule) => {
+        const formattedDate = new Date(schedule.course_date);
+        const dateKey = `${(formattedDate.getMonth() + 1).toString().padStart(2, '0')}-${formattedDate.getDate().toString().padStart(2, '0')}`;
+        const fullDate = `${formattedDate.getFullYear()}-${dateKey}`;
+        const weekDays = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
+        const weekDay = weekDays[formattedDate.getDay()];
+        // 如果日期组不存在，创建一个新的
+        if (!acc[dateKey]) {
+          acc[dateKey] = {
+            courseDate: dateKey, // 使用日期作为 courseData
+            weekDay,
+            list: []
+          };
         }
-      });
-      return acc;
-    }, {});
-
-    // 转换成数组格式并返回
-    return Object.values(groupedSchedules);
-
-  } catch (error) {
-    throw new Error('获取排课列表失败：' + error.message);
-  }
-},   
- 
+        const startTime = schedule.start_time.slice(0, -3)
+        const endTime = schedule.end_time.slice(0, -3)
+        // 添加课程信息到对应日期的列表中
+        acc[dateKey].list.push({
+          id: schedule.id,
+          courseName: schedule.course_name,
+          location: schedule.location,
+          startTime,
+          endTime,
+          timeRange: `${startTime}~${endTime}`,
+          fullDate: fullDate,
+          courseType: {
+            id: schedule.course_type_id,
+            description: schedule.course_type_desc,
+            price: schedule.course_type_price
+          }
+        });
+        return acc;
+      }, {});
+  
+      // 转换成数组格式并返回
+      return Object.values(groupedSchedules);
+  
+    } catch (error) {
+      throw new Error('获取排课列表失败：' + error.message);
+    }
+  },   
 
   async getWeekScheduleList(openid, customDate) {
     try {
@@ -298,7 +297,7 @@ async getScheduleList(openid) {
         AND course_date < CURDATE() 
         AND YEAR(course_date) = ? 
         AND MONTH(course_date) = ?
-      ORDER BY course_date DESC
+      ORDER BY course_date ASC, start_time ASC
     `, [openid, targetYear, targetMonth]);  // SQL月份从1开始，所以要加1
 
     let totalSalary = 0; // 用来累计课时费
