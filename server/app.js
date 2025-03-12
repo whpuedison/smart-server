@@ -1,3 +1,4 @@
+require('dotenv').config();
 const path = require('path')
 const Koa = require('koa')
 const views = require('koa-views')

@@ -319,4 +319,33 @@ module.exports = {
         }
     },
 
+   async getCourseOutline(ctx) {
+       const { courseName, courseType } = ctx.request.body;
+       if (!courseName || !courseType) {
+           ctx.status = 400;
+           ctx.body = {
+               code: 400,
+               message: '课程名称和课程类型不能为空'
+           };
+           return;
+       }
+
+       try {
+           const outline = await miniappService.generateCourseOutline(courseName, courseType);
+           ctx.body = {
+            code: 200,
+            message: '获取课程提纲表成功',
+            data: outline
+        };
+       } catch (error) {
+           console.error('获取课程提纲失败:', error);
+           ctx.status = 500;
+           ctx.body = {
+               code: 500,
+               message: '获取课程提纲失败',
+               error: error.message || '未知错误'
+           };
+       }
+   }
+
 };
