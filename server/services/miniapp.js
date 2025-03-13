@@ -66,6 +66,7 @@ async generateCourseOutline(courseName, courseType) {
                       1. 格式为Markdown列表
                       2. 不要返回标题
                       3. 不要中英文夹杂，言简意赅
+                      4. 用ul、li展示
                       举个例子：精准拉伸（课程名称）
                       大纲如下：
                       1.调息
