@@ -1,18 +1,10 @@
 const axios = require('axios');
 const { OpenAI } = require('openai');
 const NodeCache = require('node-cache');
-const marked = require('marked');
-const { parse } = require('node-html-parser');
-const { gfmHeadingId } = require('marked-gfm-heading-id');
-const { mangle } = require('marked-mangle');
 const outlineCache = new NodeCache({ stdTTL: 3600 * 24 * 30 }); // 缓存1个月
 const miniappModel = require('./../models/miniapp')
 const { calcIntervalMin } = require('./../utils/utils');
 const { query } = require('./../utils/db-util')
-
-// 配置marked
-marked.use(gfmHeadingId());
-marked.use(mangle());
 
 const deepseek = new OpenAI({
   baseURL: 'https://api.deepseek.com',
@@ -63,14 +55,15 @@ async generateCourseOutline(courseName, courseType) {
       const prompt = `
                       我是一个瑜伽老师，每次上课之前都需要手写一个上课内容大纲，梳理上课思路。
                       你是一个哈他瑜伽专家，精通各种瑜伽体式的名称与作用，请根据我的课程名称生成课程大纲。
-                      针对课程名称，分析课程强度，写出排课提纲（如热身、力量、拉伸这几个主要模块），
+                      针对课程名称，分析课程强度，根据排课提纲（如热身、力量、拉伸这几个主要模块），
                       列20个符合课程主题的相关瑜伽体式，放置到合适的提纲环节，一节课需要20个哈他瑜伽体式，给我专业的体式名词。
                       你还是一位文本大纲生成专家，擅长根据用户的需求创建一个有条理且易于扩展的大纲，
                       你拥有强大的主题分析能力，能准确提取关键信息和核心要点。
-                      现在返回给我格式为Markdown的列表，
+                      现在返回给我格式为rich-text nodes，
                       不要返回标题，
-                      不要中英文夹杂，
-                      用ul、li展示。
+                      回复需要结构严谨，清晰明了不啰嗦，
+                      回复里面不要有英文，
+                      只返回ul、li展示，不要有其他内容。
                       课程名称：${courseName}
                       `;
 
@@ -84,11 +77,7 @@ async generateCourseOutline(courseName, courseType) {
           max_tokens: 500
       });
 
-      const markdownContent = completion.choices[0].message.content;
-      
-      // 将Markdown转换为rich-text nodes
-      const htmlContent = marked.parse(markdownContent);
-      const nodes = this.htmlToNodes(htmlContent);
+      const nodes = completion.choices[0].message.content;
       
       // 存入缓存
       outlineCache.set(cacheKey, nodes);
@@ -98,56 +87,6 @@ async generateCourseOutline(courseName, courseType) {
       console.error('生成课程提纲失败:', error);
       throw new Error('生成课程提纲失败');
   }
-},
-
-/**
- * 将HTML转换为rich-text nodes
- * @param {string} html HTML内容
- * @returns {Array} rich-text nodes
- */
-htmlToNodes(html) {
-    const root = parse(html);
-    return this.parseElement(root);
-},
-
-/**
- * 递归解析DOM元素
- * @param {HTMLElement} element DOM元素
- * @returns {Array} 解析后的nodes
- */
-parseElement(element) {
-    const nodes = [];
-    
-    element.childNodes.forEach(child => {
-        if (child.nodeType === 3) { // 文本节点
-            const text = child.text.trim();
-            if (text) {
-                nodes.push({
-                    type: 'text',
-                    text: text
-                });
-            }
-        } else if (child.nodeType === 1) { // 元素节点
-            const node = {
-                name: child.tagName.toLowerCase(),
-                attrs: {},
-                children: this.parseElement(child)
-            };
-            
-            // 处理常见标签属性
-            if (child.tagName.toLowerCase() === 'a') {
-                node.attrs.href = child.getAttribute('href');
-            }
-            if (child.tagName.toLowerCase() === 'img') {
-                node.attrs.src = child.getAttribute('src');
-                node.attrs.alt = child.getAttribute('alt');
-            }
-            
-            nodes.push(node);
-        }
-    });
-    
-    return nodes;
 },
 
   async getScheduleList(openid) {
