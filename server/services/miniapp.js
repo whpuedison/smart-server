@@ -146,8 +146,8 @@ async generateCourseOutline(courseName, courseType) {
   async getWeekScheduleList(openid, customDate) {
     try {
       const [mondayStr, sundayStr] = customDate;
-      const START_TIME = '10:00'; // 课程最早开始时间
-      const END_TIME = '21:00'; // 课程最晚结束时间
+      const START_TIME = '09:00'; // 课程最早开始时间
+      const END_TIME = '22:00'; // 课程最晚结束时间
       // 将时间字符串转换为小时数
       const startHour = parseInt(START_TIME.split(':')[0], 10);
       const endHour = parseInt(END_TIME.split(':')[0], 10);
